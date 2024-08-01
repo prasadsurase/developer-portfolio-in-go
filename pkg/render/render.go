@@ -1,47 +1,63 @@
 package render
 
 import (
+	"bytes"
 	"fmt"
 	"html/template"
+	"log"
 	"net/http"
+	"path/filepath"
 )
-
-var templatesCache = make(map[string]*template.Template)
 
 // RenderTemplate is used to render the template
 func RenderTemplate(rw http.ResponseWriter, tmplName string) {
-	var tmpl *template.Template
-	var err error
-
-	_, inMap := templatesCache[tmplName]
-	if !inMap {
-		fmt.Println("creating template and adding to cache")
-		err = createTemplateCache(tmplName)
-		if err != nil {
-			fmt.Printf("error creating template cache: %v\n", err)
-		}
-	} else {
-		fmt.Printf("using cached template: %v\n", tmplName)
+	tc, err := createTemplateCache()
+	if err != nil {
+		log.Fatal(err)
 	}
 
-	tmpl = templatesCache[tmplName]
-	err = tmpl.Execute(rw, nil)
+	t, ok := tc[tmplName]
+	if !ok {
+		log.Fatal(err)
+	}
+
+	buf := new(bytes.Buffer)
+	t.Execute(buf, nil)
+
+	_, err = buf.WriteTo(rw)
 	if err != nil {
-		fmt.Printf("error executing template: %v\n", err)
+		fmt.Println(err)
 	}
 }
 
-// createTemplateCache creates the cache for templates using map
-func createTemplateCache(tmplName string) error {
-	templates := []string{
-		fmt.Sprintf("./templates/%s", tmplName),
-		"./templates/base.layout.tmpl",
+func createTemplateCache() (map[string]*template.Template, error) {
+	myCache := map[string]*template.Template{}
+
+	pages, err := filepath.Glob("./templates/*.page.tmpl")
+	if err != nil {
+		return myCache, err
 	}
 
-	tmpl, err := template.ParseFiles(templates...)
-	if err != nil {
-		return err
+	for _, page := range pages {
+		name := filepath.Base(page)
+		// ts, err := template.ParseFiles("./templates/"+page, "./templates/base.layout.tmpl")
+		ts, err := template.New(name).ParseFiles(page)
+		if err != nil {
+			return myCache, err
+		}
+
+		matches, err := filepath.Glob("./templates/*.layout.tmpl")
+		if err != nil {
+			return myCache, err
+		}
+		if len(matches) > 0 {
+			ts, err = ts.ParseGlob("./templates/*.layout.tmpl")
+			if err != nil {
+				return myCache, err
+			}
+		}
+		myCache[name] = ts
 	}
-	templatesCache[tmplName] = tmpl
-	return nil
+
+	return myCache, nil
 }
