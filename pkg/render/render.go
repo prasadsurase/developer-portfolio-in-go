@@ -7,18 +7,33 @@ import (
 	"log"
 	"net/http"
 	"path/filepath"
+
+	"github.com/prasadsurase/developer-portfolio-in-go/config"
 )
+
+var app *config.AppConfig
+
+func NewTemplates(a *config.AppConfig) {
+	app = a
+}
 
 // RenderTemplate is used to render the template
 func RenderTemplate(rw http.ResponseWriter, tmplName string) {
-	tc, err := createTemplateCache()
-	if err != nil {
-		log.Fatal(err)
+	var tc map[string]*template.Template
+	var err error
+
+	if app.UseCache {
+		tc = app.TemplatesCache
+	} else {
+		tc, err = CreateTemplateCache()
+		if err != nil {
+			log.Fatal("could not create template cache")
+		}
 	}
 
 	t, ok := tc[tmplName]
 	if !ok {
-		log.Fatal(err)
+		log.Fatal("could not get template from cache")
 	}
 
 	buf := new(bytes.Buffer)
@@ -30,7 +45,8 @@ func RenderTemplate(rw http.ResponseWriter, tmplName string) {
 	}
 }
 
-func createTemplateCache() (map[string]*template.Template, error) {
+// CreateTemplateCache finds and executes all the templates
+func CreateTemplateCache() (map[string]*template.Template, error) {
 	myCache := map[string]*template.Template{}
 
 	pages, err := filepath.Glob("./templates/*.page.tmpl")
