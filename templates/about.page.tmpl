@@ -4,7 +4,14 @@
     <div class="row">
       <div class="col">
         <h1>About page</h1>
-        My name is {{index .StringMap "name"}} and i am an {{index .StringMap "profession"}}
+        <p> My name is {{index .StringMap "name"}} </p>
+        <p>
+          {{if ne (index .StringMap "remote_ip") ""}}
+            Your IP address is {{index .StringMap "remote_ip"}}
+          {{else}}
+            Couldn't find your IP address
+          {{end}}
+        </p>
       </div>
     </div>
   </div>
