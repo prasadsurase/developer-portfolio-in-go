@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/prasadsurase/developer-portfolio-in-go/config"
+	"github.com/prasadsurase/developer-portfolio-in-go/models"
 	"github.com/prasadsurase/developer-portfolio-in-go/pkg/render"
 )
 
@@ -28,10 +29,12 @@ func NewHandlers(r *Repository) {
 
 // Home is the home page handler
 func (repo *Repository) Home(rw http.ResponseWriter, r *http.Request) {
-	render.RenderTemplate(rw, "home.page.tmpl")
+	render.RenderTemplate(rw, "home.page.tmpl", &models.TemplateData{})
 }
 
 // About is the about page handler
 func (repo *Repository) About(rw http.ResponseWriter, r *http.Request) {
-	render.RenderTemplate(rw, "about.page.tmpl")
+	stringMap := make(map[string]string)
+	stringMap["name"] = "Prasad Surase"
+	render.RenderTemplate(rw, "about.page.tmpl", &models.TemplateData{StringMap: stringMap})
 }

@@ -9,7 +9,12 @@ import (
 	"path/filepath"
 
 	"github.com/prasadsurase/developer-portfolio-in-go/config"
+	"github.com/prasadsurase/developer-portfolio-in-go/models"
 )
+
+func AddDefaultData(td *models.TemplateData) {
+	// td.StringMap["profession"] = "Software Developer"
+}
 
 var app *config.AppConfig
 
@@ -18,7 +23,7 @@ func NewTemplates(a *config.AppConfig) {
 }
 
 // RenderTemplate is used to render the template
-func RenderTemplate(rw http.ResponseWriter, tmplName string) {
+func RenderTemplate(rw http.ResponseWriter, tmplName string, td *models.TemplateData) {
 	var tc map[string]*template.Template
 	var err error
 
@@ -37,7 +42,8 @@ func RenderTemplate(rw http.ResponseWriter, tmplName string) {
 	}
 
 	buf := new(bytes.Buffer)
-	t.Execute(buf, nil)
+	AddDefaultData(td)
+	t.Execute(buf, td)
 
 	_, err = buf.WriteTo(rw)
 	if err != nil {
